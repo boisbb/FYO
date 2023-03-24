@@ -6,14 +6,11 @@ from PyQt5.QtCore import *
 
 from lens import Lens
 
-class Communicate(QObject):
-
-    valueChanged = pyqtSignal(Lens)
 
 class CollapsibleBox(QWidget):
     def __init__(self, title="", parent=None):
         super(CollapsibleBox, self).__init__(parent)
-
+        self.title = title
         self.toggle_button = QToolButton(
             text=title, checkable=True, checked=False
         )
@@ -50,13 +47,8 @@ class CollapsibleBox(QWidget):
             QPropertyAnimation(self.content_area, b"maximumHeight")
         )
         
-        self.distanceLE = QLineEdit()
-        self.focalLengthLE = QLineEdit()
-        self.r1LE = QLineEdit()
-        self.r2LE = QLineEdit()
-        
         self.distanceSL = QSlider(Qt.Horizontal)
-        self.distanceSL.setMinimum(1)
+        self.distanceSL.setMinimum(0)
         self.distanceSL.setMaximum(100)
         self.distanceSL.setValue(0)
         self.distanceSL.setTickPosition(QSlider.TicksBelow)
@@ -65,8 +57,8 @@ class CollapsibleBox(QWidget):
         self.distanceL = QLabel(f"Distance: {self.distanceSL.value()}")
         
         self.r1SL = QSlider(Qt.Horizontal)
-        self.r1SL.setMinimum(-50)
-        self.r1SL.setMaximum(50)
+        self.r1SL.setMinimum(-100)
+        self.r1SL.setMaximum(100)
         self.r1SL.setValue(20)
         self.r1SL.setTickPosition(QSlider.TicksBelow)
         self.r1SL.setTickInterval(2)
@@ -74,29 +66,22 @@ class CollapsibleBox(QWidget):
         self.r1L = QLabel(f"Radius 1: {self.r1SL.value()}")
         
         self.r2SL = QSlider(Qt.Horizontal)
-        self.r2SL.setMinimum(-50)
-        self.r2SL.setMaximum(50)
+        self.r2SL.setMinimum(-100)
+        self.r2SL.setMaximum(100)
         self.r2SL.setValue(-20)
         self.r2SL.setTickPosition(QSlider.TicksBelow)
         self.r2SL.setTickInterval(2)
         self.r2SL.valueChanged.connect(self.r2Changed)
         self.r2L = QLabel(f"Radius 2: {self.r2SL.value()}")
         
-        self.val_Changed = pyqtSignal(int, name='valChanged')
         self.c = Communicate()        
-        # self.form = QFormLayout()
-        # self.form.addRow(QLabel("Distance: "), self.distanceLE)
-        # self.form.addRow(QLabel("Focal length: "), self.focalLengthLE)
-        # self.form.addRow(QLabel("Radius 1"), self.r1LE)
-        # self.form.addRow(QLabel("Radius 2"), self.r2LE)
-        # self.form.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
-        # self.form.setLabelAlignment(Qt.AlignLeft)
-        #         
-        # self.pb = QPushButton()
-        # self.pb.setText("Show")
-        # self.pb.clicked.connect(lambda: self.submitForm())
         
         self.lens = Lens(0, r1=20, r2=-20)
+        self.focalLengthLabel = QLabel(f"Focal length: {self.lens.focal_length}")
+        
+        if self.title != "Lens 1":
+            self.deleteButton = QPushButton("Delete", self)
+            self.deleteButton.clicked.connect(self.deleteLens)
 
     def getLens(self):
         return self.lens
@@ -113,23 +98,19 @@ class CollapsibleBox(QWidget):
             else QAbstractAnimation.Backward
         )
         self.toggle_animation.start()
-    
-    def submitForm(self):
-        print (self.distanceLE.text())
-        print (self.focalLengthLE.text())
-        print (self.r1LE.text())
-        print (self.r2LE.text())
 
     def setContentLayout(self):
         layout = QVBoxLayout()
-        # layout.addItem(self.form)
-        # layout.addWidget(self.pb)
+        layout.addWidget(self.focalLengthLabel)
         layout.addWidget(self.distanceL)
-        layout.addWidget(self.distanceSL)
+        if self.title != "Lens 1":
+            layout.addWidget(self.distanceSL)
         layout.addWidget(self.r1L)
         layout.addWidget(self.r1SL)
         layout.addWidget(self.r2L)
         layout.addWidget(self.r2SL)
+        if self.title != "Lens 1":
+            layout.addWidget(self.deleteButton)
                 
         lay = self.content_area.layout()
         del lay
@@ -160,14 +141,28 @@ class CollapsibleBox(QWidget):
             
     def r1Changed(self):
         newR = self.r1SL.value()
+        if newR == 0 or newR == self.r2SL.value():
+            return
         self.r1L.setText(f"Radius 1: {newR}")
         self.lens.setR1(newR)
         self.lens.update()
         self.c.valueChanged.emit(self.lens)
+        self.focalLengthLabel.setText(f"Focal length: {self.lens.focal_length}")
         
     def r2Changed(self):
         newR = self.r2SL.value()
+        if newR == 0 or newR == self.r1SL.value():
+            return
         self.r2L.setText(f"Radius 2: {newR}")
         self.lens.setR2(newR)
         self.lens.update()
         self.c.valueChanged.emit(self.lens)
+        self.focalLengthLabel.setText(f"Focal length: {self.lens.focal_length}")
+    
+    def deleteLens(self):
+        self.c.remove.emit(self)
+        
+class Communicate(QObject):
+
+    valueChanged = pyqtSignal(Lens)
+    remove = pyqtSignal(CollapsibleBox)
