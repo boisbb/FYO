@@ -12,7 +12,7 @@ from utils import CollapsibleBox
 
 ONE_CM = 5
 ARROW_SPACING = ONE_CM - 2
-FIRST_LENS_POS = 60 * ONE_CM
+FIRST_LENS_POS = 1000 # 60 * ONE_CM
         
 
 class DrawingWindow(QWidget):
@@ -48,13 +48,17 @@ class DrawingWindow(QWidget):
         
         painter.drawLine(0, self.height // 2, self.width, self.height // 2)    
         
-        painter.drawLine(int(firstFP), self.height // 2 + 10, int(firstFP), self.height // 2 - 10)
+        painter.drawLine(int(firstFP), int(self.height / 2 + 10), int(firstFP), int(self.height / 2 - 10))
         
+        pen.setWidth(2)
+        painter.setPen(pen)
         painter.drawLine(self.object_coords[0], self.object_coords[1])
         painter.drawLine(self.object_coords[0].x(), self.object_coords[0].y(), self.object_coords[0].x() - ARROW_SPACING, self.object_coords[0].y() + ONE_CM)
         painter.drawLine(self.object_coords[0].x(), self.object_coords[0].y(), self.object_coords[0].x()  + ARROW_SPACING, self.object_coords[0].y() + ONE_CM)
         
-        painter.setPen(Qt.blue)
+        pen.setColor(Qt.darkCyan)
+        pen.setWidth(5)
+        painter.setPen(pen)
         # for lens in self.lenses:
         distance = 0
         outRays = None
@@ -66,29 +70,39 @@ class DrawingWindow(QWidget):
             if i == 0:
                 fst_line1 = [self.object_coords[0], QPoint(self.width, self.object_coords[0].y())]
                 fst_line2 = [QPoint(self.object_coords[0].x(), self.object_height)]
-                fst_line2.append(line_intersection([fst_line2[0], QPoint(int(firstFP), self.height // 2)],
-                                                   [QPoint(first_lens_act_pos, self.height), QPoint(first_lens_act_pos, 0)]))
-                distance = lens.computeDistance(self.object_pos_act)
-                lens.paint(lensOffset, painter, self.width, self.height, fst_line1, fst_line2, self.object_height_act, distance, self.object_pos_act)
+                fst_line3 = [QPoint(self.object_coords[0].x(), self.object_height), QPoint(FIRST_LENS_POS, self.height // 2)]
+                try:
+                    fst_line2.append(line_intersection([fst_line2[0], QPoint(int(firstFP), self.height // 2)],
+                                    [QPoint(first_lens_act_pos, self.height), QPoint(first_lens_act_pos, 0)]))
+                except:
+                    fst_line2.append(QPoint(int(firstFP), self.height))
+                # print(fst_line1, fst_line2)
+                try:
+                    distance = lens.computeDistance(self.object_pos_act)
+                except:
+                    distance = firstFP
+                    
+                lens.paint(lensOffset, painter, self.width, self.height, fst_line1, fst_line2, fst_line3, self.object_height_act, distance, self.object_pos_act)
                 outRays = lens.getOutRays()
+                outRays[1][1].setY(outRays[1][0].y())
                 self.current_mag *= lens.getMagRatio()
             else:
                 prev_distance = (-1) * (distance - lens.getDistance())
-                distance = lens.computeDistance(prev_distance)
-                lens.paint(lensOffset, painter, self.width, self.height, outRays[0], outRays[1], self.object_height_act * self.current_mag, distance, prev_distance)
+                try:
+                    distance = lens.computeDistance(prev_distance)
+                except:
+                    distance = firstFP
+                lens.paint(lensOffset, painter, self.width, self.height, outRays[0], outRays[1], outRays[2], self.object_height_act * self.current_mag, distance, prev_distance)
                 outRays = lens.getOutRays()
                 self.current_mag *= lens.getMagRatio()
             
             lensOffset += lens.getDistanceCm()
-            print ("distances")
-            print(distance)
-            # print(prev_distance)
             
             if i == len(self.lenses) - 1:
                 self.last_obj_distance = distance
-                print(lens.getDistanceCm())
-                print(lens.getDistance())
-                print(distance * ONE_CM + lensOffset)
+                # print(lens.getDistanceCm())
+                # print(lens.getDistance())
+                # print(distance * ONE_CM + lensOffset)
                 lens.paintLastRay(painter, self.height, distance * ONE_CM + lensOffset)
         
     
@@ -99,11 +113,11 @@ class DrawingWindow(QWidget):
         super().resizeEvent(event)
         self.width = self.frameGeometry().width()
         self.height = self.frameGeometry().height()
-        self.object_height = self.height // 2 + self.object_height_act * ONE_CM
+        self.object_height = int(self.height / 2 + self.object_height_act * ONE_CM)
     
     def setNewObjHeight(self, newH):
         self.object_height_act = newH
-        self.object_height = self.height // 2 + self.object_height_act * ONE_CM
+        self.object_height = int(self.height / 2 + self.object_height_act * ONE_CM)
         
         
         
@@ -170,10 +184,21 @@ class Window(QMainWindow):
         
         self.vlay.addWidget(self.addLensB)
         self.vlay.addStretch()
+        
+        widget = QWidget()
+        self.layout = QGridLayout(widget)
+        self.right_widget = DrawingWindow(self.boxes[-1].getLens())
+        self.right_widget.setMinimumSize(2000, 2000)
+        
+        
+        self.scroll = QScrollArea(widgetResizable=True)
+        self.scroll.setWidget(self.right_widget)
+        self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum() // 2)
+        self.scroll.horizontalScrollBar().setValue(self.scroll.horizontalScrollBar().maximum() // 2)
+        self.layout.addWidget(self.scroll, 0, 0)
+        self.setCentralWidget(widget)
         self.resize(800,600)
         
-        self.right_widget = DrawingWindow(self.boxes[-1].getLens())
-        self.setCentralWidget(self.right_widget)
         
         self.magRatioL.setText(f"Magnification: {self.right_widget.current_mag}")
         
@@ -187,15 +212,14 @@ class Window(QMainWindow):
         self.magRatioL.setText(f"Magnification: {round(self.right_widget.current_mag, 3)}")
     
     def removeLens(self, box):
-        print (box.title)
         self.right_widget.lenses.remove(box.lens)
         self.vlay.removeWidget(box)
         box.deleteLater()
         self.boxes.remove(box)
         box = None
+        self.right_widget.repaint()
         self.repaint()
                         
-    
     def objDistanceChanged(self):
         newDist = self.objPosSL.value()
         self.objPosL.setText(f"Object distance: {newDist}")
