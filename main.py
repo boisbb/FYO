@@ -1,14 +1,10 @@
 import sys
-from PyQt5 import QtGui, QtCore
+from PyQt5 import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from lens import Lens, line_intersection
-import math
-from skspatial.objects import Circle, Line
-import random
-
-from utils import CollapsibleBox
+from src.lens import line_intersection
+from src.utils import CollapsibleBox
 
 ONE_CM = 5
 ARROW_SPACING = ONE_CM - 2
@@ -29,6 +25,8 @@ class DrawingWindow(QWidget):
         self.object_coords = [QPoint(0, 0), QPoint(0, 0)]
         self.last_obj_distance = 0
         self.current_mag = 1
+        
+        self.image_dist = self.object_pos_act * 2
     
     def paintEvent(self, event):
         super().paintEvent(event)
@@ -63,6 +61,7 @@ class DrawingWindow(QWidget):
         distance = 0
         outRays = None
         lensOffset = FIRST_LENS_POS
+        lensOffsetAct = 0
         obj_h = 0
         # prev_distance = 0
         self.current_mag = 1.0
@@ -97,12 +96,11 @@ class DrawingWindow(QWidget):
                 self.current_mag *= lens.getMagRatio()
             
             lensOffset += lens.getDistanceCm()
+            lensOffsetAct += lens.getDistance()
             
             if i == len(self.lenses) - 1:
                 self.last_obj_distance = distance
-                # print(lens.getDistanceCm())
-                # print(lens.getDistance())
-                # print(distance * ONE_CM + lensOffset)
+                self.image_dist = self.object_pos_act + lensOffsetAct + distance
                 lens.paintLastRay(painter, self.height, distance * ONE_CM + lensOffset)
         
     
@@ -132,6 +130,7 @@ class Window(QMainWindow):
         
         self.objInfoL = QLabel("Image is: Real")
         self.magRatioL = QLabel("")
+        self.imgDistL = QLabel("")
         
         self.objPosSL = QSlider(Qt.Horizontal)
         self.objPosSL.setMinimum(1)
@@ -170,6 +169,7 @@ class Window(QMainWindow):
         scroll.setWidgetResizable(True)
         self.vlay = QVBoxLayout(content)
         self.vlay.addWidget(self.objInfoL)
+        self.vlay.addWidget(self.imgDistL)
         self.vlay.addWidget(self.magRatioL)
         self.vlay.addWidget(self.objPosL)
         self.vlay.addWidget(self.objPosSL)
@@ -201,6 +201,7 @@ class Window(QMainWindow):
         
         
         self.magRatioL.setText(f"Magnification: {self.right_widget.current_mag}")
+        self.imgDistL.setText(f"Image distance (from object): {round(self.right_widget.image_dist, 3)}")
         
     def collapsingBoxChanged(self, lens):
         for i, lensDW in enumerate(self.right_widget.lenses):
@@ -227,6 +228,7 @@ class Window(QMainWindow):
         self.right_widget.object_pos = newDist * ONE_CM
         self.right_widget.repaint()
         self.magRatioL.setText(f"Magnification: {round(self.right_widget.current_mag, 3)}")
+        self.imgDistL.setText(f"Image to object (dist): {round(self.right_widget.image_dist, 2)}")
         
     def objHeightChanged(self):
         newH = self.objHeightSL.value()

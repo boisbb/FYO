@@ -143,9 +143,12 @@ class Lens():
             self.outRay3 = prevRay3
                         
     def paintLastRay(self, painter, windowH, distance):
-        isect = line_intersection(self.outRay1, [QPoint(int(distance), 0), QPoint(int(distance), windowH)])
-        isect2 = line_intersection(self.outRay2, [QPoint(int(distance), 0), QPoint(int(distance), windowH)])
-        isect3 = line_intersection(self.outRay3, [QPoint(int(distance), 0), QPoint(int(distance), windowH)])
+        try:
+            isect = line_intersection(self.outRay1, [QPoint(int(distance), 0), QPoint(int(distance), windowH)])
+            isect2 = line_intersection(self.outRay2, [QPoint(int(distance), 0), QPoint(int(distance), windowH)])
+            isect3 = line_intersection(self.outRay3, [QPoint(int(distance), 0), QPoint(int(distance), windowH)])
+        except:
+            return
         
         # print(self.outRay1)
         # print(self.outRay2)

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from lens import Lens
+from src.lens import Lens
 
 
 class CollapsibleBox(QWidget):
@@ -77,7 +77,7 @@ class CollapsibleBox(QWidget):
         self.c = Communicate()        
         
         self.lens = Lens(0, r1=20, r2=-20)
-        self.focalLengthLabel = QLabel(f"Focal length: {self.lens.focal_length}")
+        self.focalLengthLabel = QLabel(f"Focal length: {round(self.lens.focal_length, 3)}")
         
         if self.title != "Lens 1":
             self.deleteButton = QPushButton("Delete", self)
