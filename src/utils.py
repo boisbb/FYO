@@ -147,7 +147,7 @@ class CollapsibleBox(QWidget):
         self.lens.setR1(newR)
         self.lens.update()
         self.c.valueChanged.emit(self.lens)
-        self.focalLengthLabel.setText(f"Focal length: {self.lens.focal_length}")
+        self.focalLengthLabel.setText(f"Focal length: {round(self.lens.focal_length, 3)}")
         
     def r2Changed(self):
         newR = self.r2SL.value()
@@ -157,7 +157,7 @@ class CollapsibleBox(QWidget):
         self.lens.setR2(newR)
         self.lens.update()
         self.c.valueChanged.emit(self.lens)
-        self.focalLengthLabel.setText(f"Focal length: {self.lens.focal_length}")
+        self.focalLengthLabel.setText(f"Focal length: {round(self.lens.focal_length, 3)}")
     
     def deleteLens(self):
         self.c.remove.emit(self)

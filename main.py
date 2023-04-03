@@ -123,7 +123,7 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        self.setWindowTitle('Primitive Lens Designed')
+        self.setWindowTitle('Primitive Lens Simulator')
         self.width = 800
         self.height = 600
         self.resize(self.width, self.height)
