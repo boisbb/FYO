@@ -6,7 +6,8 @@ from PyQt5.QtCore import *
 
 from src.lens import Lens
 
-
+# Heavily inspired by this stackoverflow thread:
+# https://stackoverflow.com/questions/52615115/how-to-create-collapsible-box-in-pyqt
 class CollapsibleBox(QWidget):
     def __init__(self, title="", parent=None):
         super(CollapsibleBox, self).__init__(parent)
