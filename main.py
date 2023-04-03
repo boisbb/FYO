@@ -201,7 +201,7 @@ class Window(QMainWindow):
         
         
         self.magRatioL.setText(f"Magnification: {self.right_widget.current_mag}")
-        self.imgDistL.setText(f"Image distance (from object): {round(self.right_widget.image_dist, 3)}")
+        self.imgDistL.setText(f"Image to object (dist): {round(self.right_widget.image_dist, 3)}")
         
     def collapsingBoxChanged(self, lens):
         for i, lensDW in enumerate(self.right_widget.lenses):
@@ -211,6 +211,7 @@ class Window(QMainWindow):
         self.right_widget.repaint()
         self.objInfoL.setText("Image is: {}".format("Real" if self.right_widget.last_obj_distance > 0 else "Virtual"))
         self.magRatioL.setText(f"Magnification: {round(self.right_widget.current_mag, 3)}")
+        self.imgDistL.setText(f"Image to object (dist): {round(self.right_widget.image_dist, 2)}")
     
     def removeLens(self, box):
         self.right_widget.lenses.remove(box.lens)
@@ -227,6 +228,7 @@ class Window(QMainWindow):
         self.right_widget.object_pos_act = newDist
         self.right_widget.object_pos = newDist * ONE_CM
         self.right_widget.repaint()
+        self.objInfoL.setText("Image is: {}".format("Real" if self.right_widget.last_obj_distance > 0 else "Virtual"))
         self.magRatioL.setText(f"Magnification: {round(self.right_widget.current_mag, 3)}")
         self.imgDistL.setText(f"Image to object (dist): {round(self.right_widget.image_dist, 2)}")
         
